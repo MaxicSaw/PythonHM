@@ -1,20 +1,21 @@
-def get_mask_card_number(card_number: str) -> str:
-    return f"{card_number[:4]} {card_number[4:6]}** **** {card_number[12:16]}"
+def get_mask_card_number(number_card: str) -> str:
+    """Функцию маскировки номера банковской карты"""
+    str_number_card = number_card
+    masked = str_number_card[:6] + "*" * 6 + str_number_card[-4:]
+
+    count = 0
+    slice_masc = ""
+    for i in masked:
+        count += 1
+        slice_masc += i
+        if count % 4 == 0:
+            slice_masc += " "
+
+    return slice_masc[0:19]
 
 
-def get_mask_account(account_number: str) -> str:
-    return f"**{account_number[-4:]}"
-
-
-real_card_number = "7000792289606361"
-real_account = "73654108430135874305"
-
-if len(real_card_number) != 16:
-    print("Номер карты должен содержать ровно 16 цифр")
-else:
-    print(f"Номер карты: {get_mask_card_number(real_card_number)}")
-
-if len(real_account) < 6:
-    print("Номер счёта должен содержать минимално 6 цифр или более")
-else:
-    print(f"Номер счёта: {get_mask_account(real_account)}")
+def get_mask_account(number_acc: str) -> str:
+    """Функцию маскировки номера банковского счета"""
+    str_number_acc = number_acc
+    masked = "**" + str_number_acc[-4:]
+    return masked
