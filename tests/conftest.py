@@ -1,5 +1,6 @@
 import pytest
 
+
 @pytest.fixture
 def transaction_data() -> list[dict]:
     return [
@@ -9,6 +10,7 @@ def transaction_data() -> list[dict]:
         {"date": "2023-10-27T12:00:00.000Z", "state": "EXECUTED"},
         {"date": "2023-10-27T10:00:00.000Z", "state": "PENDING"},
     ]
+
 
 @pytest.fixture
 def sample_transactions():

@@ -47,5 +47,5 @@ def card_number_generator(start, end):
 
     for i in range(start, end + 1):
         card_number = str(i).zfill(16)  # Дополняем 0 до 16
-        formatted_card_number = " ".join([card_number[i:i+4] for i in range(0, 16, 4)])
+        formatted_card_number = " ".join([card_number[i : i + 4] for i in range(0, 16, 4)])
         yield formatted_card_number

@@ -27,7 +27,7 @@ class TestProcessing:
         assert sorted_data[-1]["date"] == "2023-10-26T10:00:00.000Z"
 
     def test_sort_by_date_ascending(self, transaction_data: list[dict]) -> None:
-        sorted_data = sort_by_date(transaction_data, reverse = False)
+        sorted_data = sort_by_date(transaction_data, reverse=False)
         assert sorted_data[0]["date"] == "2023-10-26T10:00:00.000Z"
         assert sorted_data[-1]["date"] == "2023-10-28T10:00:00.000Z"
 
