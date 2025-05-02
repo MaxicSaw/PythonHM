@@ -1,158 +1,120 @@
 # Homework
 
-This project provides a widget to **display and process bank operations data**. It includes functions for filtering, sorting, masking, and analyzing transaction data through both functional and generator-based approaches.
+This project provides a widget to display and process bank operations data.  It includes functions for filtering and sorting operations.
 
----
+## Installation
 
-##  Installation
+1.  Clone the repository: `git clone <repository_url>`
+2.  Install dependencies: `pip install -r requirements.txt` (Create a `requirements.txt` with `masks` library inside)
 
-1. **Clone the repository**:
+## Usage
 
-```bash
-git clone <repository_url>
-```
-
-2. **Install dependencies**:
-
-```bash
-pip install -r requirements.txt
-```
-
-Make sure your `requirements.txt` includes at least the following:
-
-```
-masks
-pytest
-pytest-cov
-```
-
----
-
-##  Usage
-
-The main script is located at:
-
-```
-src/main.py
-```
-
-It imports and demonstrates usage of functions from:
-- `src/processing.py`
-- `src/masks.py`
-- `src/generators.py`
+The main script is `main.py`.  It imports functions from the `src/processing.py`, `src/masks.py`, and `src/generators.py` module.
 
 To run the script:
-
 ```bash
-python src/main.py
+python main.py
 ```
 
-You can modify the `test_data` inside `main.py` to test your own transaction samples.
+▌Example
+=======
+The script uses sample data to demonstrate the functionality.   
+You can modify the test_data in main.py to use your own data. 
+The main.py script now also demonstrates the use of the @log decorator. 
+Logs will be output to the console unless a filename is specified when 
+applying the decorator (e.g., @log(filename="app.log")).
 
----
+▌Functions
+=======
+•  decorators.py: Contains the log decorator for automatic logging of function execution, 
+   including successful results and exceptions.
 
-##  Functions Overview
+•  filter_by_state(operations, state='EXECUTED'): Filters a list of operations dictionaries by the state key.
+   Returns a new list containing only operations with the specified state.
 
-###  Data Processing (processing.py)
-- `filter_by_state(operations, state='EXECUTED')`  
-  Filters a list of operations dictionaries by the `state` key.
+•  sort_by_date(operations, reverse=True): Sorts a list of operation dictionaries by the date key.
+   Returns a new list sorted by date, in descending order by default.
 
-- `sort_by_date(operations, reverse=True)`  
-  Sorts a list of operation dictionaries by the `date` key (descending by default).
+•  mask_account_card(data): Masks sensitive information in account or card numbers. 
+   Automatically detects the type of data and applies appropriate masking.
 
----
+•  get_data(date_string): Converts date strings to a specific format (DD.MM.YYYY).
 
-###  Data Masking (masks.py)
-- `mask_account_card(data)`  
-  Automatically detects whether `data` is a card or account and applies masking.
+•  get_mask_card_number(card_number): Masks a card number, revealing only the first 6 and last 4 digits.
 
-- `get_mask_card_number(card_number)`  
-  Masks a card number, leaving only the first 6 and last 4 digits visible.
+•  get_mask_account(account_number): Masks an account number, revealing only the last 4 digits.
 
-- `get_mask_account(account_number)`  
-  Masks an account number, leaving only the last 4 digits visible.
+•  filter_by_currency(transactions, currency_code): Filters a list of transactions based on the specified currency code.
 
-- `get_data(date_string)`  
-  Converts date strings to the format `DD.MM.YYYY`.
+•  transaction_descriptions(transactions): Extracts the description from each transaction in a list.
 
----
+•  card_number_generator(start, end): Generates a sequence of formatted card numbers within a specified range, useful for testing purposes.
 
-###  Generators (generators.py)
-- `filter_by_currency(transactions, currency_code)`  
-  Yields only transactions with a matching currency.
+▌The log Decorator
+====
+The @log decorator is used to automatically log the execution of functions.
 
-- `transaction_descriptions(transactions)`  
-  Yields the description field from each transaction.
+▌USEAGE:
+===
+from decorators import log
+````
+@log
+def my_function(x, y):
+    return x + y
+    
+@log(filename="mylog.txt")
+def another_function(x, y):
+    raise ValueError("Something went wrong")
+````
+▌Features:
+=
+•  Logs the start and end of function execution.
+•  Logs successful results.
+•  Logs exceptions, including the exception type, message, and input arguments.
+•  Can log to the console or to a file.
 
-- `card_number_generator(start, end)`  
-  Generates card numbers in the format `0000 0000 0000 0000` for testing.
+▌Testing
+==
+This project includes a comprehensive suite of tests written using pytest. The tests cover the following aspects:
 
----
+▌Test Coverage
+==
+•  masks.py:
+  •  Correctly masks card numbers with different formats and lengths.
+  •  Correctly masks account numbers with different lengths.
+  •  Handles edge cases such as empty strings and None inputs.
 
-##  Testing
+•  widget.py:
+  •  Correctly identifies and masks card and account numbers based on input type.
+  •  Transforms date strings into the desired format (DD.MM.YYYY).
+  •  Handles invalid date formats gracefully (returns None or raises an exception depending on the implementation).
 
-This project includes a comprehensive test suite using **pytest**. Tests cover:
+•  processing.py:
+  •  Filters lists of operations dictionaries correctly based on state.
+  •  Sorts lists of operations dictionaries correctly by date in both ascending and descending order.
+  •  Handles missing or invalid dates in the data.
 
-###  Test Coverage:
+•  tests/test_generators.py:
+  •  Filters transaction lists by currency code accurately.
+  •  Extracts transaction descriptions correctly from lists of transactions.
+  •  Generates valid card numbers within the specified range.
 
-#### `masks.py`
-- Masks card numbers with different lengths.
-- Handles edge cases like empty strings or `None`.
-
-#### `widget.py`
-- Detects input types (card/account).
-- Masks and formats data appropriately.
-- Handles invalid date formats gracefully.
-
-#### `processing.py`
-- Filters by operation state.
-- Sorts by date in both ascending and descending order.
-- Handles missing/invalid date values.
-
-#### `generators.py`
-- Filters transactions by currency.
-- Extracts transaction descriptions.
-- Generates valid formatted card numbers within range.
-
----
-
-##  Running Tests
-
-Make sure you have `pytest` and `pytest-cov` installed:
-
-```bash
-pip install pytest pytest-cov
-```
-
-Then run:
-
-```bash
+▌Running Tests
+==
+1. Make sure you have pytest installed (pip install pytest).
+2. Navigate to the project's root directory (where the tests/ folder is located).
+3. Run the tests using the following command:  
+````bash
 pytest
-```
-
-###  Coverage Report
-
-To generate a code coverage report:
-
-```bash
+ ````
+4. To generate a coverage report (showing which parts of the code are tested), use: 
+````bash
 pytest --cov=.
-```
+````
 
-To generate a visual HTML report:
-
-```bash
+This will run all tests in the tests/ directory and display the results. A coverage report will also be generated, indicating the percentage of code covered by the tests. You can view a detailed HTML report with:
+````bash
 pytest --cov=. --cov-report html
-```
+````
 
-This will create an `htmlcov/` directory with `index.html` — open it in your browser to see detailed coverage results.
-
----
-
-##  Notes
-
-- Use GitFlow: create feature branches off `develop`
-- Keep commits atomic and meaningful
-- Follow PEP 8 and use linters (e.g. flake8, pylint)
-
-
-Этот проект лицензирован по [лицензии MIT](LICENSE).
+This will create a html cov directory with an index.html file to view coverage results in your browser.
