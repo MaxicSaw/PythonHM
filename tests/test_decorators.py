@@ -1,6 +1,7 @@
 import pytest
 from src.decorators import log
 
+
 def test_log_to_file_success(tmpdir):
     log_file = tmpdir.join("test.log")
 
@@ -47,6 +48,7 @@ def test_log_to_console_success(capsys):
     assert "my_function ok" in captured.err  # Изменено на captured.err
     assert "Result: 7" in captured.err      # Изменено на captured.err
 
+
 def test_log_to_console_error(capsys):
     @log()
     def my_function(x, y):
@@ -61,6 +63,7 @@ def test_log_to_console_error(capsys):
     assert "TypeError" in captured.err      # Изменено на captured.err
     assert "Inputs: (5, 6), {}" in captured.err  # Изменено на captured.err
 
+
 def test_log_no_filename_provided(capsys):
     @log()
     def add(x, y):
@@ -68,10 +71,12 @@ def test_log_no_filename_provided(capsys):
 
     add(5, 3)
     captured = capsys.readouterr()
-    assert "add ok" in captured.err # Изменено на captured.err
+    assert "add ok" in captured.err
+
 
 def test_log_kwargs(tmpdir):
     log_file = tmpdir.join("test.log")
+
     @log(filename=str(log_file))
     def greet(name="World"):
         return f"Hello, {name}!"

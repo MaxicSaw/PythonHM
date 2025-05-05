@@ -2,6 +2,7 @@
 import pytest
 from src.generators import filter_by_currency, transaction_descriptions, card_number_generator
 
+
 @pytest.mark.parametrize(
     "currency_code, expected_count, expected_descriptions",
     [
@@ -20,6 +21,7 @@ def test_filter_by_currency(sample_transactions, currency_code, expected_count, 
 def test_filter_by_currency_empty_list():
     filtered_transactions = list(filter_by_currency([], "USD"))
     assert len(filtered_transactions) == 0
+
 
 def test_filter_by_currency_missing_currency_code():
     transactions = [
@@ -58,6 +60,7 @@ def test_card_number_generator(start, end, expected_count, expected_first, expec
     if expected_count > 0:
         assert card_numbers[0] == expected_first
         assert card_numbers[-1] == expected_last
+
 
 def test_card_number_generator_zero_start():
     card_numbers = list(card_number_generator(0, 2))

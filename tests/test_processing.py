@@ -2,6 +2,7 @@ import pytest
 
 from src.processing import filter_by_state
 
+
 @pytest.mark.parametrize("my_list, state, expected", [
     (
         [

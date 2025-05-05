@@ -1,6 +1,7 @@
 from functools import wraps
 import logging
 
+
 def log(filename=None):
     """
     Декоратор для логирования начала и конца выполнения функции, а также ее результатов или возникших ошибок.
