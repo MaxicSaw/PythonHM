@@ -1,9 +1,9 @@
 import json
 import os
 from unittest.mock import patch
-
+from src.external_api import calculate_transaction_amount
 from src.utils import load_transactions
-
+import unittest
 
 def test_get_transaction():
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -938,3 +938,67 @@ def test_not_a_list():
     transactions = load_transactions(filepath)
     assert transactions == []
     os.remove(filepath)
+
+class TestCalculateTransactionAmount(unittest.TestCase):
+
+    def test_rub_transaction(self):
+        transaction = {
+            "operationAmount": {
+                "amount": "1000",
+                "currency": {"code": "RUB"}
+            }
+        }
+        result = calculate_transaction_amount(transaction)
+        self.assertEqual(result, 1000.0)
+
+    def test_usd_transaction(self):
+        transaction = {
+            "operationAmount": {
+                "amount": "100",
+                "currency": {"code": "USD"}
+            }
+        }
+
+        mock_response = {
+            "result": 9500.0  # Пример результата
+        }
+
+        with patch("requests.get") as mocked_get:
+            mocked_get.return_value.status_code = 200
+            mocked_get.return_value.json.return_value = mock_response
+
+            os.environ["API_KEY"] = "fake_key"
+            result = calculate_transaction_amount(transaction)
+
+            self.assertEqual(result, 9500.0)
+            mocked_get.assert_called_once()
+
+    def test_invalid_amount_format(self):
+        transaction = {
+            "operationAmount": {
+                "amount": "ten thousand",
+                "currency": {"code": "RUB"}
+            }
+        }
+        result = calculate_transaction_amount(transaction)
+        self.assertIsNone(result)
+
+    def test_unsupported_currency(self):
+        transaction = {
+            "operationAmount": {
+                "amount": "1000",
+                "currency": {"code": "JPY"}
+            }
+        }
+        result = calculate_transaction_amount(transaction)
+        self.assertIsNone(result)
+
+    def test_missing_keys(self):
+        transaction = {
+            "amount": "1000",  # неверный формат
+        }
+        result = calculate_transaction_amount(transaction)
+        self.assertIsNone(result)
+
+if __name__ == "__main__":
+    unittest.main()
