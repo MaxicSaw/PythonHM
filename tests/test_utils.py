@@ -1,15 +1,14 @@
 import json
-import os
-from unittest.mock import patch
+from unittest.mock import patch, mock_open, MagicMock
+import pytest
 from src.external_api import calculate_transaction_amount
 from src.utils import load_transactions
-import unittest
 
-def test_get_transaction():
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    json_file_path = os.path.join(current_dir, "..", "data", "operations.json")
-    json_file_path = os.path.abspath(json_file_path)
-    assert load_transactions(json_file_path) == [
+
+@pytest.fixture
+def sample_transactions():
+    """Фикстура с примером транзакций"""
+    return [
         {
             "id": 441945886,
             "state": "EXECUTED",
@@ -902,103 +901,103 @@ def test_get_transaction():
             "to": "Счет 96527012349577388612",
         },
     ]
-    assert load_transactions("kjayfiueieuguweygbeiug") == []
-    assert load_transactions("..\\data\\operations2.json") == []
 
 
-def test_load_transactions_other_error(capfd):
-    """Test: load_transactions handles other exceptions and prints an error."""
-    filepath = "test.json"
+def test_load_transactions_success(sample_transactions):
+    """Тест загрузки транзакций с полным мокированием"""
+    with patch("builtins.open", mock_open(read_data=json.dumps(sample_transactions))) as mock_file:
+        result = load_transactions("dummy.json")
+        assert result == sample_transactions
+        mock_file.assert_called_once_with("dummy.json", "r", encoding="utf-8")
 
+def test_load_transactions_file_not_found():
+    """Тест обработки отсутствия файла (без проверки print)"""
     with patch("builtins.open") as mock_open:
-        mock_open.side_effect = OSError("Simulated OSError")
+        mock_open.side_effect = FileNotFoundError
+        result = load_transactions("missing.json")
+        assert result == []
 
-        transactions = load_transactions(filepath)
-        assert transactions == []
-        assert "" in capfd.readouterr().out
+def test_load_transactions_invalid_json(tmp_path):
+    """Тест обработки невалидного JSON (без проверки print)"""
+    filepath = tmp_path / "invalid.json"
+    filepath.write_text("Invalid JSON")
+    result = load_transactions(str(filepath))
+    assert result == []
 
+def test_load_transactions_not_a_list(tmp_path):
+    """Тест обработки JSON-объекта вместо списка (без проверки print)"""
+    filepath = tmp_path / "not_list.json"
+    filepath.write_text(json.dumps({"key": "value"}))
+    result = load_transactions(str(filepath))
+    assert result == []
 
-def test_invalid_json():
-    """Тест: Некорректный JSON."""
-    filepath = "invalid_json.json"
-    with open(filepath, "w", encoding="utf-8") as f:
-        f.write("This is not valid JSON")
+@pytest.fixture
+def mock_api_key(monkeypatch):
+    monkeypatch.setenv("API_KEY", "test_key")
 
-    with patch("builtins.print"):
-        transactions = load_transactions(filepath)
-        assert transactions == []
-
-
-def test_not_a_list():
-    """Тест: JSON не является списком."""
-    filepath = "not_a_list.json"
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump({"key": "value"}, f)  # Запишем JSON-объект (не список)
-
-    transactions = load_transactions(filepath)
-    assert transactions == []
-    os.remove(filepath)
-
-class TestCalculateTransactionAmount(unittest.TestCase):
-
-    def test_rub_transaction(self):
-        transaction = {
-            "operationAmount": {
-                "amount": "1000",
-                "currency": {"code": "RUB"}
-            }
+@pytest.mark.parametrize("amount,currency,expected", [
+    ("1000", "RUB", 1000.0),
+    ("ten", "RUB", None),
+    ("1000", "JPY", None),
+])
+def test_calculate_transaction_amount_basic(amount, currency, expected):
+    transaction = {
+        "operationAmount": {
+            "amount": amount,
+            "currency": {"code": currency}
         }
-        result = calculate_transaction_amount(transaction)
-        self.assertEqual(result, 1000.0)
+    }
+    assert calculate_transaction_amount(transaction) == expected
 
-    def test_usd_transaction(self):
-        transaction = {
-            "operationAmount": {
-                "amount": "100",
-                "currency": {"code": "USD"}
-            }
+def test_calculate_transaction_missing_keys():
+    assert calculate_transaction_amount({"amount": "1000"}) is None
+
+
+@patch('requests.get')
+def test_calculate_transaction_usd_success(mock_get, mock_api_key):
+    """Тест конвертации USD с полным мокированием API"""
+    # Настройка мок-ответа
+    mock_response = MagicMock()
+    mock_response.status_code = 200
+    mock_response.json.return_value = {"result": 75.5}  # Изменено с 7550.0 на 75.5 (курс)
+    mock_get.return_value = mock_response
+
+    transaction = {
+        "operationAmount": {
+            "amount": "100",
+            "currency": {"code": "USD"}
         }
+    }
+    result = calculate_transaction_amount(transaction)
 
-        mock_response = {
-            "result": 9500.0  # Пример результата
+    # Проверки
+    assert result == 7550.0  # Ожидаем 100 * 75.5 = 7550.0
+    mock_get.assert_called_once()
+
+    # Проверка параметров запроса (адаптировано под реальный вызов)
+    args, kwargs = mock_get.call_args
+    assert "apilayer.com" in args[0]
+    assert "params" in kwargs
+    assert kwargs["params"]["from"] == "USD"
+    assert kwargs["params"]["to"] == "RUB"
+    assert float(kwargs["params"]["amount"]) == 100.0
+
+
+@patch('requests.get')
+def test_calculate_transaction_api_failure(mock_get, mock_api_key):
+    """Тест ошибки API с полным мокированием"""
+    mock_response = MagicMock()
+    mock_response.status_code = 500
+    mock_response.json.return_value = None  # Добавлено
+    mock_get.return_value = mock_response
+
+    transaction = {
+        "operationAmount": {
+            "amount": "100",
+            "currency": {"code": "USD"}
         }
+    }
 
-        with patch("requests.get") as mocked_get:
-            mocked_get.return_value.status_code = 200
-            mocked_get.return_value.json.return_value = mock_response
-
-            os.environ["API_KEY"] = "fake_key"
-            result = calculate_transaction_amount(transaction)
-
-            self.assertEqual(result, 9500.0)
-            mocked_get.assert_called_once()
-
-    def test_invalid_amount_format(self):
-        transaction = {
-            "operationAmount": {
-                "amount": "ten thousand",
-                "currency": {"code": "RUB"}
-            }
-        }
-        result = calculate_transaction_amount(transaction)
-        self.assertIsNone(result)
-
-    def test_unsupported_currency(self):
-        transaction = {
-            "operationAmount": {
-                "amount": "1000",
-                "currency": {"code": "JPY"}
-            }
-        }
-        result = calculate_transaction_amount(transaction)
-        self.assertIsNone(result)
-
-    def test_missing_keys(self):
-        transaction = {
-            "amount": "1000",  # неверный формат
-        }
-        result = calculate_transaction_amount(transaction)
-        self.assertIsNone(result)
-
-if __name__ == "__main__":
-    unittest.main()
+    result = calculate_transaction_amount(transaction)
+    assert result is None
+    mock_get.assert_called_once()

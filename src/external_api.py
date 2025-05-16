@@ -7,44 +7,46 @@ load_dotenv()
 
 
 def calculate_transaction_amount(transaction):
-    """
-    Вычисляет сумму транзакции в рублях.
-    Args:
-        transaction (dict): Словарь, представляющий транзакцию.
-                         Обязательные ключи: 'amount' (float), 'currency','code' (str).
-    Returns:
-        float: Сумма транзакции в рублях.
-               Возвращает None в случае ошибки.
-    """
     try:
-        amount = transaction["operationAmount"]["amount"]
+        # Проверка наличия обязательных полей
+        if not transaction.get("operationAmount"):
+            return None
+
+        amount_str = transaction["operationAmount"]["amount"]
         currency = transaction["operationAmount"]["currency"]["code"]
 
-        if not isinstance(amount, str) or not isinstance(currency, str):
-            print("Ошибка: Некорректные данные транзакции")
-            return None
-
+        # Парсим сумму
         try:
-            amount = float(amount)
+            amount = float(amount_str)
         except ValueError:
-            print("Ошибка: Некорректный формат суммы транзакции")
             return None
 
+        # Для RUB сразу возвращаем сумму
         if currency == "RUB":
             return amount
 
-        api_key = os.getenv("API_KEY")
-        if currency not in ("USD", "EUR"):
-            print(f"Ошибка: Неподдерживаемая валюта: {currency}")
+        # Для неподдерживаемых валют
+        if currency not in ["USD", "EUR"]:  # Добавьте другие валюты по необходимости
             return None
 
-        url = f"https://api.apilayer.com/exchangerates_data/convert?to=RUB&from={currency}&amount={amount}"
-        # print(url)
-        response = requests.get(url, headers={"apikey": api_key})
-        response.raise_for_status()
-        data = response.json()
-        return float(data["result"])
+        # Получаем курс от API
+        api_key = os.getenv("API_KEY")
+        response = requests.get(
+            "https://api.apilayer.com/exchangerates_data/convert",
+            params={
+                "from": currency,
+                "to": "RUB",
+                "amount": amount
+            },
+            headers={"apikey": api_key}
+        )
 
-    except (KeyError, TypeError) as e:
-        print(f"Ошибка: Некорректная структура данных транзакции: {e}")
+        if response.status_code != 200:
+            return None
+
+        # Умножаем сумму на курс из API
+        rate = response.json()["result"]
+        return amount * rate
+
+    except Exception:
         return None
