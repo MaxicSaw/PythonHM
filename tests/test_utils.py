@@ -910,12 +910,14 @@ def test_load_transactions_success(sample_transactions):
         assert result == sample_transactions
         mock_file.assert_called_once_with("dummy.json", "r", encoding="utf-8")
 
+
 def test_load_transactions_file_not_found():
     """Тест обработки отсутствия файла (без проверки print)"""
     with patch("builtins.open") as mock_open:
         mock_open.side_effect = FileNotFoundError
         result = load_transactions("missing.json")
         assert result == []
+
 
 def test_load_transactions_invalid_json(tmp_path):
     """Тест обработки невалидного JSON (без проверки print)"""
@@ -924,6 +926,7 @@ def test_load_transactions_invalid_json(tmp_path):
     result = load_transactions(str(filepath))
     assert result == []
 
+
 def test_load_transactions_not_a_list(tmp_path):
     """Тест обработки JSON-объекта вместо списка (без проверки print)"""
     filepath = tmp_path / "not_list.json"
@@ -931,9 +934,11 @@ def test_load_transactions_not_a_list(tmp_path):
     result = load_transactions(str(filepath))
     assert result == []
 
+
 @pytest.fixture
 def mock_api_key(monkeypatch):
     monkeypatch.setenv("API_KEY", "test_key")
+
 
 @pytest.mark.parametrize("amount,currency,expected", [
     ("1000", "RUB", 1000.0),
@@ -948,6 +953,7 @@ def test_calculate_transaction_amount_basic(amount, currency, expected):
         }
     }
     assert calculate_transaction_amount(transaction) == expected
+
 
 def test_calculate_transaction_missing_keys():
     assert calculate_transaction_amount({"amount": "1000"}) is None
