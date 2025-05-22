@@ -2,6 +2,7 @@ from typing import Any, Dict, List
 
 from collections import Counter
 
+
 def filter_by_state(operations: List[Dict[str, Any]], state: str = "EXECUTED") -> List[Dict[str, Any]]:
     """
     Фильтрует список операций по заданному статусу.
@@ -28,6 +29,7 @@ def sort_by_date(operations: List[Dict[str, Any]], reverse: bool = True) -> List
         List[Dict[str, Any]]: Отсортированный список операций.
     """
     return sorted(operations, key=lambda x: x.get("date", ""), reverse=reverse)
+
 
 def count_transactions_by_category(transactions: List[Dict[str, Any]],
                                    categories: List[str]) -> Dict[str, int]:
